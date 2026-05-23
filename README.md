@@ -1,36 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SRS English
 
-## Getting Started
+A vocabulary builder powered by spaced repetition (SM-2 algorithm). Add words, idioms, and phrasal verbs as flashcards and review them daily — the algorithm schedules each card just before you'd forget it.
 
-First, run the development server:
+## Features
+
+- **Spaced repetition** — SM-2 algorithm adjusts review intervals based on how well you remember each card
+- **3 card types** — Words, Idioms, and Phrasal verbs
+- **Image support** — attach images to cards as visual memory anchors
+- **Daily streak tracking** — keeps your consistency visible
+- **Dashboard** — see total cards, cards due today, streak, and breakdown by category
+- **Keyboard shortcuts** — Space to flip, 1–4 to rate during study
+- **Dark / light theme** — pastel palette with system preference support
+- **Auth** — email/password login via Supabase Auth
+
+## Tech stack
+
+- [Next.js 16](https://nextjs.org/) (App Router, Server Components, Server Actions)
+- [Supabase](https://supabase.com/) — Postgres database, Auth, Storage
+- [Tailwind CSS v4](https://tailwindcss.com/)
+- TypeScript
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 18+
+- A [Supabase](https://supabase.com/) project
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/YOUR_USERNAME/srs-english.git
+cd srs-english
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure environment variables
+
+Create a `.env.local` file in the root:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+### 4. Run database migrations
+
+Apply the SQL files in `supabase/migrations/` to your Supabase project via the SQL editor or Supabase CLI:
+
+```bash
+npx supabase db push
+```
+
+### 5. Start the dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The easiest way to deploy is [Vercel](https://vercel.com):
 
-## Learn More
+1. Push the repo to GitHub
+2. Import the project on Vercel
+3. Add the environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+4. In your Supabase dashboard → Authentication → URL Configuration, set:
+   - **Site URL**: `https://your-app.vercel.app`
+   - **Redirect URLs**: `https://your-app.vercel.app/auth/callback`
 
-To learn more about Next.js, take a look at the following resources:
+## How the SM-2 algorithm works
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Each card has an **ease factor** (default 2.5). After each review you rate yourself:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Rating | Key | Effect |
+|--------|-----|--------|
+| Again  | 1   | Resets interval to day 1, lowers ease factor |
+| Hard   | 2   | Short next interval, ease decreases slightly |
+| Good   | 3   | Standard interval progression |
+| Easy   | 4   | Interval grows faster, ease factor increases |
 
-## Deploy on Vercel
+New interval = `previous interval × ease factor`. A card rated Easy consistently will go from daily → weekly → monthly reviews automatically.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+app/
+├── page.tsx          # Dashboard
+├── study/            # Study session
+├── cards/            # Card list, create, edit
+├── login/            # Auth
+└── about/            # How it works
+
+lib/
+├── sm2.ts            # SM-2 algorithm
+└── supabase/         # Supabase client (browser + server)
+
+supabase/
+└── migrations/       # SQL migrations
+```
