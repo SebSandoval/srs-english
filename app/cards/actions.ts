@@ -85,6 +85,26 @@ export async function updateCard(id: string, formData: FormData) {
   redirect('/cards')
 }
 
+export async function fetchCards(category: string | undefined, offset: number, limit: number): Promise<{ cards: import('@/types').Card[]; hasMore: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { cards: [], hasMore: false }
+
+  let query = supabase
+    .from('cards')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1)
+
+  if (category && ['word', 'idiom', 'phrasal_verb', 'other'].includes(category)) {
+    query = query.eq('category', category)
+  }
+
+  const { data: cards } = await query
+  return { cards: (cards ?? []) as import('@/types').Card[], hasMore: (cards?.length ?? 0) === limit }
+}
+
 export async function deleteCard(id: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
