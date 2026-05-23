@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Nav } from './nav'
+import { StudyCTA } from './study-cta'
 import type { Category } from '@/types'
+
 
 async function getStats(userId: string) {
   const supabase = await createClient()
@@ -19,11 +20,16 @@ async function getStats(userId: string) {
   ])
 
   const byCategory = { word: 0, idiom: 0, phrasal_verb: 0, other: 0 } as Record<Category, number>
+  const dueTodayByCategory = { word: 0, idiom: 0, phrasal_verb: 0, other: 0 } as Record<Category, number>
   let dueToday = 0
 
   for (const card of cards ?? []) {
-    byCategory[card.category as Category] = (byCategory[card.category as Category] ?? 0) + 1
-    if (card.next_review_date <= today) dueToday++
+    const cat = card.category as Category
+    byCategory[cat] = (byCategory[cat] ?? 0) + 1
+    if (card.next_review_date <= today) {
+      dueToday++
+      dueTodayByCategory[cat] = (dueTodayByCategory[cat] ?? 0) + 1
+    }
   }
 
   const reviewDays = new Set((logs ?? []).map((l) => l.reviewed_at.split('T')[0]))
@@ -34,7 +40,7 @@ async function getStats(userId: string) {
     d.setDate(d.getDate() - 1)
   }
 
-  return { total: cards?.length ?? 0, byCategory, dueToday, streak }
+  return { total: cards?.length ?? 0, byCategory, dueToday, dueTodayByCategory, streak }
 }
 
 async function signOut() {
@@ -112,19 +118,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* CTA */}
-        {stats.dueToday > 0 && (
-          <div className="animate-fade-up delay-6">
-            <Link
-              href="/study"
-              className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-accent text-bg text-sm font-semibold hover:bg-accent/90 active:scale-[0.98] transition-colors duration-150 shadow-lg shadow-accent/20"
-            >
-              Start studying
-              <span className="bg-bg/20 text-bg px-2 py-0.5 rounded-full text-xs font-bold">
-                {stats.dueToday} card{stats.dueToday !== 1 ? 's' : ''} due
-              </span>
-            </Link>
-          </div>
-        )}
+        <StudyCTA dueTodayByCategory={stats.dueTodayByCategory} totalDue={stats.dueToday} />
       </main>
     </>
   )

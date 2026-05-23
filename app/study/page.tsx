@@ -4,6 +4,8 @@ import { Nav } from '@/app/nav'
 import { StudySession } from './study-session'
 import type { Card } from '@/types'
 
+const VALID_CATEGORIES = ['word', 'idiom', 'phrasal_verb', 'other']
+
 async function signOut() {
   'use server'
   const { createClient } = await import('@/lib/supabase/server')
@@ -13,17 +15,32 @@ async function signOut() {
   redirect('/login')
 }
 
-export default async function StudyPage() {
+export default async function StudyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ categories?: string }>
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const { categories } = await searchParams
+  const categoryFilter = categories
+    ?.split(',')
+    .filter(c => VALID_CATEGORIES.includes(c)) ?? []
+
   const today = new Date().toISOString().split('T')[0]
-  const { data: cards } = await supabase
+  let query = supabase
     .from('cards')
     .select('*')
     .eq('user_id', user.id)
     .lte('next_review_date', today)
+
+  if (categoryFilter.length > 0) {
+    query = query.in('category', categoryFilter)
+  }
+
+  const { data: cards } = await query
 
   return (
     <>
