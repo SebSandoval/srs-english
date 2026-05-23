@@ -1,65 +1,185 @@
-import Image from "next/image";
+import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
+import { Nav } from './nav'
+import type { Category } from '@/types'
 
-export default function Home() {
+async function getStats(userId: string) {
+  const supabase = await createClient()
+  const today = new Date().toISOString().split('T')[0]
+
+  const [{ data: cards }, { data: logs }] = await Promise.all([
+    supabase.from('cards').select('category, next_review_date').eq('user_id', userId),
+    supabase
+      .from('review_logs')
+      .select('reviewed_at')
+      .eq('user_id', userId)
+      .gte('reviewed_at', new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString())
+      .order('reviewed_at', { ascending: false }),
+  ])
+
+  const byCategory = { word: 0, idiom: 0, phrasal_verb: 0 } as Record<Category, number>
+  let dueToday = 0
+
+  for (const card of cards ?? []) {
+    byCategory[card.category as Category] = (byCategory[card.category as Category] ?? 0) + 1
+    if (card.next_review_date <= today) dueToday++
+  }
+
+  const reviewDays = new Set((logs ?? []).map((l) => l.reviewed_at.split('T')[0]))
+  let streak = 0
+  const d = new Date()
+  while (reviewDays.has(d.toISOString().split('T')[0])) {
+    streak++
+    d.setDate(d.getDate() - 1)
+  }
+
+  return { total: cards?.length ?? 0, byCategory, dueToday, streak }
+}
+
+async function signOut() {
+  'use server'
+  const supabase = await createClient()
+  await supabase.auth.signOut()
+  redirect('/login')
+}
+
+export default async function DashboardPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const stats = await getStats(user.id)
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      <Nav onSignOut={signOut} />
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 sm:space-y-8">
+
+        {/* Header */}
+        <div className="animate-fade-up">
+          <h1 className="text-2xl font-bold text-t1 tracking-tight">Dashboard</h1>
+          <p className="text-sm text-t3 mt-1">{user.email}</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Stat grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatCard
+            label="Total cards"
+            value={stats.total}
+            className="animate-fade-up delay-1"
+          />
+          <StatCard
+            label="Due today"
+            value={stats.dueToday}
+            highlight={stats.dueToday > 0}
+            className="animate-fade-up delay-2"
+          />
+          <StatCard
+            label="Streak"
+            value={`${stats.streak}d`}
+            amber={stats.streak > 0}
+            className="animate-fade-up delay-3"
+          />
+          <StatCard
+            label="Words"
+            value={stats.byCategory.word}
+            className="animate-fade-up delay-4"
+          />
         </div>
+
+        {/* By category */}
+        <div className="animate-fade-up delay-5">
+          <h2 className="text-xs font-semibold text-t3 uppercase tracking-widest mb-3">By category</h2>
+          <div className="rounded-xl border border-border bg-surface overflow-hidden divide-y divide-border">
+            {(
+              [
+                ['word', 'Words', '📝'],
+                ['idiom', 'Idioms', '💬'],
+                ['phrasal_verb', 'Phrasal verbs', '🔗'],
+              ] as const
+            ).map(([cat, label, icon]) => (
+              <CategoryRow
+                key={cat}
+                label={label}
+                icon={icon}
+                value={stats.byCategory[cat]}
+                total={stats.total}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* CTA */}
+        {stats.dueToday > 0 && (
+          <div className="animate-fade-up delay-6">
+            <Link
+              href="/study"
+              className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-accent text-bg text-sm font-semibold hover:bg-accent/90 active:scale-[0.98] transition-colors duration-150 shadow-lg shadow-accent/20"
+            >
+              Start studying
+              <span className="bg-bg/20 text-bg px-2 py-0.5 rounded-full text-xs font-bold">
+                {stats.dueToday} card{stats.dueToday !== 1 ? 's' : ''} due
+              </span>
+            </Link>
+          </div>
+        )}
       </main>
+    </>
+  )
+}
+
+function StatCard({
+  label,
+  value,
+  highlight,
+  amber,
+  className = '',
+}: {
+  label: string
+  value: string | number
+  highlight?: boolean
+  amber?: boolean
+  className?: string
+}) {
+  const accent = highlight ? 'border-accent/30 bg-accent/5' : amber ? 'border-accent-2/30 bg-accent-2/5' : 'border-border bg-surface'
+  const valueColor = highlight ? 'text-accent' : amber ? 'text-accent-2' : 'text-t1'
+
+  return (
+    <div className={`rounded-xl border p-4 transition-colors duration-150 hover:border-border-hi ${accent} ${className}`}>
+      <p className="text-xs text-t3 mb-2 font-medium">{label}</p>
+      <p className={`text-2xl font-bold tracking-tight ${valueColor}`}>{value}</p>
     </div>
-  );
+  )
+}
+
+function CategoryRow({
+  label,
+  icon,
+  value,
+  total,
+}: {
+  label: string
+  icon: string
+  value: number
+  total: number
+}) {
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0
+  return (
+    <div className="flex items-center justify-between px-4 py-3 group hover:bg-elevated transition-colors">
+      <div className="flex items-center gap-2.5">
+        <span className="text-sm">{icon}</span>
+        <span className="text-sm text-t2 font-medium">{label}</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="w-20 h-1.5 rounded-full bg-border overflow-hidden hidden sm:block">
+          <div
+            className="h-full rounded-full bg-accent/50 transition-[width] duration-700"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <span className="text-sm font-semibold text-t1 tabular-nums w-5 text-right">{value}</span>
+      </div>
+    </div>
+  )
 }

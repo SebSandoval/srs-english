@@ -1,26 +1,76 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --font-sans: 'Outfit', sans-serif;
+
+  /* Light theme – warm pastels (default) */
+  --color-bg:        #f8f6f2;
+  --color-surface:   #f1ebe2;
+  --color-elevated:  #eae3d8;
+  --color-border:    #d5cdc2;
+  --color-border-hi: #bfb5a8;
+  --color-accent:    #3d7a6e;
+  --color-accent-2:  #b86b2f;
+  --color-t1:        #1e1912;
+  --color-t2:        #6b5a47;
+  --color-t3:        #a08d7b;
+  --color-danger:    #b85c52;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Dark theme overrides – warm, not cold */
+[data-theme="dark"] {
+  --color-bg:        #171310;
+  --color-surface:   #1e1a15;
+  --color-elevated:  #262119;
+  --color-border:    #362e24;
+  --color-border-hi: #473d31;
+  --color-accent:    #5fb5a5;
+  --color-accent-2:  #d4855a;
+  --color-t1:        #f0e8de;
+  --color-t2:        #9a8778;
+  --color-t3:        #5a4f44;
+  --color-danger:    #de7d72;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@utility animate-fade-up {
+  animation: fadeUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@utility animate-fade-in {
+  animation: fadeIn 0.4s ease both;
+}
+
+@utility animate-scale-in {
+  animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@utility delay-1 { animation-delay: 60ms; }
+@utility delay-2 { animation-delay: 120ms; }
+@utility delay-3 { animation-delay: 180ms; }
+@utility delay-4 { animation-delay: 240ms; }
+@utility delay-5 { animation-delay: 300ms; }
+@utility delay-6 { animation-delay: 360ms; }
