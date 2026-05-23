@@ -5,6 +5,11 @@ import { createClient } from '@/lib/supabase/server'
 
 export type AuthState = { error: string } | { success: true } | null
 
+const ALLOWED_EMAILS = [
+  'nicolas.arias@beon.tech',
+  // add more approved emails here
+]
+
 export async function signIn(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
@@ -24,6 +29,9 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
 
   if (!email || !password) return { error: 'Email and password are required.' }
   if (password.length < 6) return { error: 'Password must be at least 6 characters.' }
+  if (!ALLOWED_EMAILS.includes(email.toLowerCase().trim())) {
+    return { error: 'This email is not authorized to register.' }
+  }
 
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signUp({ email, password })

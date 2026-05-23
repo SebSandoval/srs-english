@@ -19,12 +19,14 @@ const CATEGORY_LABEL: Record<Category, string> = {
   word: 'Word',
   idiom: 'Idiom',
   phrasal_verb: 'Phrasal verb',
+  other: 'Other',
 }
 
 const CATEGORY_STYLE: Record<Category, string> = {
   word: 'bg-accent/10 text-accent border-accent/20',
   idiom: 'bg-purple-500/10 text-purple-300 border-purple-500/20',
   phrasal_verb: 'bg-accent-2/10 text-accent-2 border-accent-2/20',
+  other: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
 }
 
 export default async function CardsPage({
@@ -43,7 +45,7 @@ export default async function CardsPage({
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
-  if (category && ['word', 'idiom', 'phrasal_verb'].includes(category)) {
+  if (category && ['word', 'idiom', 'phrasal_verb', 'other'].includes(category)) {
     query = query.eq('category', category)
   }
 
@@ -80,6 +82,7 @@ export default async function CardsPage({
             ['word', 'Words'],
             ['idiom', 'Idioms'],
             ['phrasal_verb', 'Phrasal verbs'],
+            ['other', 'Other'],
           ].map(([val, label]) => (
             <Link
               key={label}

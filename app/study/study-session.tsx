@@ -37,6 +37,7 @@ const CATEGORY_LABEL: Record<Category, string> = {
   word: 'Word',
   idiom: 'Idiom',
   phrasal_verb: 'Phrasal verb',
+  other: 'Other',
 }
 
 export function StudySession({ cards }: { cards: Card[] }) {

@@ -18,7 +18,7 @@ async function getStats(userId: string) {
       .order('reviewed_at', { ascending: false }),
   ])
 
-  const byCategory = { word: 0, idiom: 0, phrasal_verb: 0 } as Record<Category, number>
+  const byCategory = { word: 0, idiom: 0, phrasal_verb: 0, other: 0 } as Record<Category, number>
   let dueToday = 0
 
   for (const card of cards ?? []) {
@@ -97,6 +97,7 @@ export default async function DashboardPage() {
                 ['word', 'Words', '📝'],
                 ['idiom', 'Idioms', '💬'],
                 ['phrasal_verb', 'Phrasal verbs', '🔗'],
+                ['other', 'Other', '💡'],
               ] as const
             ).map(([cat, label, icon]) => (
               <CategoryRow

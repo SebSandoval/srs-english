@@ -1,4 +1,4 @@
-export type Category = 'word' | 'idiom' | 'phrasal_verb'
+export type Category = 'word' | 'idiom' | 'phrasal_verb' | 'other'
 
 export interface Card {
   id: string

@@ -8,6 +8,7 @@ const CATEGORIES = [
   { value: 'word', label: 'Word' },
   { value: 'idiom', label: 'Idiom' },
   { value: 'phrasal_verb', label: 'Phrasal verb' },
+  { value: 'other', label: 'Other' },
 ] as const
 
 export function CardForm({
