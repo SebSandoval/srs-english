@@ -156,17 +156,17 @@ function CardRow({
         </div>
         <p className="text-xs text-t2 mt-1.5 line-clamp-1 leading-relaxed">{card.definition}</p>
       </div>
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         <Link
           href={`/cards/edit/${card.id}`}
-          className="text-xs text-t3 hover:text-t1 transition-colors px-2 py-1 rounded-lg hover:bg-border"
+          className="text-xs font-medium text-t2 border border-border bg-elevated px-3 py-1.5 rounded-lg hover:border-border-hi hover:text-t1 hover:bg-border transition-colors duration-150"
         >
           Edit
         </Link>
         <button
           type="button"
           onClick={() => onDelete(card.id)}
-          className="text-xs text-t3 hover:text-danger transition-colors px-2 py-1 rounded-lg hover:bg-danger/5"
+          className="text-xs font-medium text-danger border border-danger/25 bg-danger/5 px-3 py-1.5 rounded-lg hover:border-danger/50 hover:bg-danger/10 transition-colors duration-150"
         >
           Delete
         </button>
