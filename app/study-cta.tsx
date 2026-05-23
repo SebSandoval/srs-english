@@ -44,34 +44,37 @@ export function StudyCTA({
 
   return (
     <div className="animate-fade-up delay-6 space-y-3">
-      {visibleChips.length > 1 && (
-        <div>
-          <p className="text-xs font-semibold text-t3 uppercase tracking-widest mb-2">Practice by category</p>
-          <div className="flex flex-wrap gap-2">
-            {visibleChips.map(({ cat, label, icon, active }) => {
-              const isActive = selected.has(cat)
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => toggle(cat)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors duration-150 ${
-                    isActive
-                      ? active
-                      : 'bg-surface text-t2 border-border hover:border-border-hi hover:text-t1'
-                  }`}
-                >
-                  <span>{icon}</span>
-                  {label}
-                  <span className={`ml-0.5 tabular-nums ${isActive ? 'opacity-80' : 'text-t3'}`}>
-                    {dueTodayByCategory[cat]}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
+      <div>
+        <p className="text-xs font-semibold text-t3 uppercase tracking-widest mb-2">Practice by category</p>
+        <div className="flex flex-wrap gap-2">
+          {CHIPS.map(({ cat, label, icon, active }) => {
+            const due = dueTodayByCategory[cat]
+            const isActive = selected.has(cat)
+            const disabled = due === 0
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => !disabled && toggle(cat)}
+                disabled={disabled}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors duration-150 ${
+                  disabled
+                    ? 'opacity-30 cursor-not-allowed bg-surface text-t3 border-border'
+                    : isActive
+                    ? active
+                    : 'bg-surface text-t2 border-border hover:border-border-hi hover:text-t1'
+                }`}
+              >
+                <span>{icon}</span>
+                {label}
+                <span className={`ml-0.5 tabular-nums ${isActive ? 'opacity-80' : 'text-t3'}`}>
+                  {due}
+                </span>
+              </button>
+            )
+          })}
         </div>
-      )}
+      </div>
 
       <Link
         href={href}
