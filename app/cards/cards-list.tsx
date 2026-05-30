@@ -1,26 +1,26 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { deleteCard, fetchCards } from './actions'
-import type { Card, Category } from '@/types'
+import { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { deleteCard, fetchCards } from "./actions";
+import type { Card, Category } from "@/types";
 
-const PAGE_SIZE = 10
+const PAGE_SIZE = 10;
 
 const CATEGORY_LABEL: Record<Category, string> = {
-  word: 'Word',
-  idiom: 'Idiom',
-  phrasal_verb: 'Phrasal verb',
-  other: 'Other',
-}
+  word: "Word",
+  idiom: "Idiom",
+  phrasal_verb: "Phrasal verb",
+  other: "Other",
+};
 
 const CATEGORY_STYLE: Record<Category, string> = {
-  word: 'bg-accent/10 text-accent border-accent/20',
-  idiom: 'bg-purple-500/10 text-purple-300 border-purple-500/20',
-  phrasal_verb: 'bg-accent-2/10 text-accent-2 border-accent-2/20',
-  other: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
-}
+  word: "bg-accent/10 text-accent border-accent/20",
+  idiom: "bg-purple-500/10 text-purple-300 border-purple-500/20",
+  phrasal_verb: "bg-accent-2/10 text-accent-2 border-accent-2/20",
+  other: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
+};
 
 export function CardsList({
   initialCards,
@@ -28,56 +28,65 @@ export function CardsList({
   category,
   totalCount,
 }: {
-  initialCards: Card[]
-  initialHasMore: boolean
-  category: string | undefined
-  totalCount: number
+  initialCards: Card[];
+  initialHasMore: boolean;
+  category: string | undefined;
+  totalCount: number;
 }) {
-  const [cards, setCards] = useState(initialCards)
-  const [hasMore, setHasMore] = useState(initialHasMore)
-  const [loading, setLoading] = useState(false)
-  const [count, setCount] = useState(totalCount)
-  const sentinelRef = useRef<HTMLDivElement>(null)
-  const offsetRef = useRef(initialCards.length)
-  const loadingRef = useRef(false)
-  const hasMoreRef = useRef(initialHasMore)
+  const [cards, setCards] = useState(initialCards);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [loading, setLoading] = useState(false);
+  const [count, setCount] = useState(totalCount);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const offsetRef = useRef(initialCards.length);
+  const loadingRef = useRef(false);
+  const hasMoreRef = useRef(initialHasMore);
 
   useEffect(() => {
-    setCards(initialCards)
-    setHasMore(initialHasMore)
-    setCount(totalCount)
-    offsetRef.current = initialCards.length
-    hasMoreRef.current = initialHasMore
-  }, [initialCards, initialHasMore, totalCount])
+    setCards(initialCards);
+    setHasMore(initialHasMore);
+    setCount(totalCount);
+    offsetRef.current = initialCards.length;
+    hasMoreRef.current = initialHasMore;
+  }, [initialCards, initialHasMore, totalCount]);
 
   const loadMore = useCallback(async () => {
-    if (loadingRef.current || !hasMoreRef.current) return
-    loadingRef.current = true
-    setLoading(true)
-    const { cards: newCards, hasMore: more } = await fetchCards(category, offsetRef.current, PAGE_SIZE)
-    offsetRef.current += newCards.length
-    hasMoreRef.current = more
-    setCards(prev => [...prev, ...newCards])
-    setHasMore(more)
-    setLoading(false)
-    loadingRef.current = false
-  }, [category])
+    if (loadingRef.current || !hasMoreRef.current) return;
+    loadingRef.current = true;
+    setLoading(true);
+    const { cards: newCards, hasMore: more } = await fetchCards(
+      category,
+      offsetRef.current,
+      PAGE_SIZE,
+    );
+    offsetRef.current += newCards.length;
+    hasMoreRef.current = more;
+    setCards((prev) => {
+      const existingIds = new Set(prev.map((c) => c.id));
+      return [...prev, ...newCards.filter((c) => !existingIds.has(c.id))];
+    });
+    setHasMore(more);
+    setLoading(false);
+    loadingRef.current = false;
+  }, [category]);
 
   useEffect(() => {
-    const el = sentinelRef.current
-    if (!el) return
+    const el = sentinelRef.current;
+    if (!el) return;
     const observer = new IntersectionObserver(
-      (entries) => { if (entries[0].isIntersecting) loadMore() },
-      { rootMargin: '200px' }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [loadMore])
+      (entries) => {
+        if (entries[0].isIntersecting) loadMore();
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   async function handleDelete(id: string) {
-    await deleteCard(id)
-    setCards(prev => prev.filter(c => c.id !== id))
-    setCount(prev => prev - 1)
+    await deleteCard(id);
+    setCards((prev) => prev.filter((c) => c.id !== id));
+    setCount((prev) => prev - 1);
   }
 
   if (!cards.length && !loading) {
@@ -85,7 +94,9 @@ export function CardsList({
       <div className="text-center py-20 animate-fade-in">
         <div className="text-4xl mb-4">🃏</div>
         <p className="text-sm font-semibold text-t2">No cards yet</p>
-        <p className="text-xs text-t3 mt-1 mb-5">Start building your vocabulary</p>
+        <p className="text-xs text-t3 mt-1 mb-5">
+          Start building your vocabulary
+        </p>
         <Link
           href="/cards/new"
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent text-bg text-sm font-semibold hover:bg-accent/90 transition-colors duration-150"
@@ -93,7 +104,7 @@ export function CardsList({
           Create your first card
         </Link>
       </div>
-    )
+    );
   }
 
   return (
@@ -101,7 +112,12 @@ export function CardsList({
       <p className="text-sm text-t3 -mt-4 mb-4">{count} total</p>
       <div className="space-y-2">
         {cards.map((card, i) => (
-          <CardRow key={card.id} card={card} onDelete={handleDelete} index={i} />
+          <CardRow
+            key={card.id}
+            card={card}
+            onDelete={handleDelete}
+            index={i}
+          />
         ))}
       </div>
 
@@ -117,7 +133,7 @@ export function CardsList({
         )}
       </div>
     </>
-  )
+  );
 }
 
 function CardRow({
@@ -125,13 +141,20 @@ function CardRow({
   onDelete,
   index,
 }: {
-  card: Card
-  onDelete: (id: string) => Promise<void>
-  index: number
+  card: Card;
+  onDelete: (id: string) => Promise<void>;
+  index: number;
 }) {
-  const today = new Date().toISOString().split('T')[0]
-  const isDue = card.next_review_date <= today
-  const delayClass = ['delay-1', 'delay-2', 'delay-3', 'delay-4', 'delay-5', 'delay-6'][index % 6]
+  const today = new Date().toISOString().split("T")[0];
+  const isDue = card.next_review_date <= today;
+  const delayClass = [
+    "delay-1",
+    "delay-2",
+    "delay-3",
+    "delay-4",
+    "delay-5",
+    "delay-6",
+  ][index % 6];
 
   return (
     <div
@@ -139,13 +162,20 @@ function CardRow({
     >
       {card.image_url && (
         <div className="relative w-12 h-12 shrink-0 rounded-lg overflow-hidden border border-border mt-0.5">
-          <Image src={card.image_url} alt={card.word} fill className="object-cover" />
+          <Image
+            src={card.image_url}
+            alt={card.word}
+            fill
+            className="object-cover"
+          />
         </div>
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-semibold text-sm text-t1">{card.word}</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${CATEGORY_STYLE[card.category]}`}>
+          <span
+            className={`text-xs px-2 py-0.5 rounded-full border font-medium ${CATEGORY_STYLE[card.category]}`}
+          >
             {CATEGORY_LABEL[card.category]}
           </span>
           {isDue && (
@@ -154,7 +184,9 @@ function CardRow({
             </span>
           )}
         </div>
-        <p className="text-xs text-t2 mt-1.5 line-clamp-1 leading-relaxed">{card.definition}</p>
+        <p className="text-xs text-t2 mt-1.5 line-clamp-1 leading-relaxed">
+          {card.definition}
+        </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <Link
@@ -172,5 +204,5 @@ function CardRow({
         </button>
       </div>
     </div>
-  )
+  );
 }
